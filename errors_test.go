@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"reflect"
 	"testing"
 )
@@ -247,5 +248,81 @@ func TestErrorEquality(t *testing.T) {
 		for j := range vals {
 			_ = vals[i] == vals[j] // mustn't panic
 		}
+	}
+}
+
+func TestWrapType(t *testing.T) {
+	type args struct {
+		err     error
+		eType   Typer
+		message string
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantCode int
+		wantMsg  string
+	}{
+		{
+			name: "wrap type",
+			args: args{
+				err:     errors.New("test error"),
+				eType:   TypeNotFound,
+				message: "resource not found",
+			},
+			wantCode: http.StatusNotFound,
+			wantMsg:  "resource not found: test error",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := WrapType(tt.args.err, tt.args.eType, tt.args.message)
+			code, msg := GetAPIError(got)
+			if code != tt.wantCode {
+				t.Errorf("WrapType() code = %v, want %v", code, tt.wantCode)
+			}
+			if msg != tt.wantMsg {
+				t.Errorf("WrapType() msg = %v, want %v", msg, tt.wantMsg)
+			}
+		})
+	}
+}
+
+func TestWrapTypef(t *testing.T) {
+	type args struct {
+		err    error
+		eType  Typer
+		format string
+		args   []interface{}
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantCode int
+		wantMsg  string
+	}{
+		{
+			name: "wrap type",
+			args: args{
+				err:    errors.New("test error"),
+				eType:  TypeNotFound,
+				format: "error %s",
+				args:   []interface{}{"param"},
+			},
+			wantCode: http.StatusNotFound,
+			wantMsg:  "error param: test error",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := WrapTypef(tt.args.err, tt.args.eType, tt.args.format, tt.args.args...)
+			code, msg := GetAPIError(got)
+			if code != tt.wantCode {
+				t.Errorf("WrapTypef() code = %v, want %v", code, tt.wantCode)
+			}
+			if msg != tt.wantMsg {
+				t.Errorf("WrapTypef() msg = %v, want %v", msg, tt.wantMsg)
+			}
+		})
 	}
 }

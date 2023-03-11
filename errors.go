@@ -118,7 +118,8 @@ func Errorf(format string, args ...interface{}) error {
 
 // fundamental is an error that has a message and a stack, but no caller.
 type fundamental struct {
-	msg string
+	msg   string
+	eType Typer
 	*stack
 }
 
@@ -138,6 +139,14 @@ func (f *fundamental) Format(s fmt.State, verb rune) {
 	case 'q':
 		fmt.Fprintf(s, "%q", f.msg)
 	}
+}
+
+func (f *fundamental) Type() Typer {
+	return f.eType
+}
+
+func (f *fundamental) APIError() (int, string) {
+	return f.Type().HTTPStatusCode(), f.msg
 }
 
 // WithStack annotates err with a stack trace at the point WithStack was called.
@@ -178,6 +187,13 @@ func (w *withStack) Format(s fmt.State, verb rune) {
 	}
 }
 
+func (w *withStack) APIError() (int, string) {
+	if w, ok := w.error.(APIError); ok {
+		return w.APIError()
+	}
+	return defaultErrType.HTTPStatusCode(), w.Error()
+}
+
 // Wrap returns an error annotating err with a stack trace
 // at the point Wrap is called, and the supplied message.
 // If err is nil, Wrap returns nil.
@@ -188,6 +204,22 @@ func Wrap(err error, message string) error {
 	err = &withMessage{
 		cause: err,
 		msg:   message,
+		eType: getErrType(err),
+	}
+	return &withStack{
+		err,
+		callers(),
+	}
+}
+
+func WrapType(err error, eType Typer, message string) error {
+	if err == nil {
+		return nil
+	}
+	err = &withMessage{
+		cause: err,
+		msg:   message,
+		eType: eType,
 	}
 	return &withStack{
 		err,
@@ -205,6 +237,22 @@ func Wrapf(err error, format string, args ...interface{}) error {
 	err = &withMessage{
 		cause: err,
 		msg:   fmt.Sprintf(format, args...),
+		eType: getErrType(err),
+	}
+	return &withStack{
+		err,
+		callers(),
+	}
+}
+
+func WrapTypef(err error, eType Typer, format string, args ...interface{}) error {
+	if err == nil {
+		return nil
+	}
+	err = &withMessage{
+		cause: err,
+		msg:   fmt.Sprintf(format, args...),
+		eType: eType,
 	}
 	return &withStack{
 		err,
@@ -221,6 +269,7 @@ func WithMessage(err error, message string) error {
 	return &withMessage{
 		cause: err,
 		msg:   message,
+		eType: getErrType(err),
 	}
 }
 
@@ -233,12 +282,14 @@ func WithMessagef(err error, format string, args ...interface{}) error {
 	return &withMessage{
 		cause: err,
 		msg:   fmt.Sprintf(format, args...),
+		eType: getErrType(err),
 	}
 }
 
 type withMessage struct {
 	cause error
 	msg   string
+	eType Typer
 }
 
 func (w *withMessage) Error() string { return w.msg + ": " + w.cause.Error() }
@@ -261,13 +312,21 @@ func (w *withMessage) Format(s fmt.State, verb rune) {
 	}
 }
 
+func (w *withMessage) Type() Typer {
+	return w.eType
+}
+
+func (w *withMessage) APIError() (int, string) {
+	return w.Type().HTTPStatusCode(), w.Error()
+}
+
 // Cause returns the underlying cause of the error, if possible.
 // An error value has a cause if it implements the following
 // interface:
 //
-//     type causer interface {
-//            Cause() error
-//     }
+//	type causer interface {
+//	       Cause() error
+//	}
 //
 // If the error does not implement Cause, the original error will
 // be returned. If the error is nil, nil will be returned without further
