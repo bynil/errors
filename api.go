@@ -13,6 +13,22 @@ type Typer interface {
 	HTTPStatusCode() int
 }
 
+type CustomType struct {
+	Detail     string
+	StatusCode int
+}
+
+func NewCustomType(detail string, statusCode int) CustomType {
+	return CustomType{
+		Detail:     detail,
+		StatusCode: statusCode,
+	}
+}
+
+func (c CustomType) HTTPStatusCode() int {
+	return c.StatusCode
+}
+
 type errType int
 
 // While adding a new Type, the respective helper functions should be added, also update the

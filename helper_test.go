@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-type CustomType int
+type CustomTypeExample int
 
-func (e CustomType) HTTPStatusCode() int { return int(e) }
+func (e CustomTypeExample) HTTPStatusCode() int { return int(e) }
 
 func TestHasType(t *testing.T) {
 	type args struct {
@@ -51,13 +51,13 @@ func TestHasType(t *testing.T) {
 				err: WrapType(
 					WrapType(
 						Internal("hello world"),
-						CustomType(499),
+						CustomTypeExample(499),
 						DefaultMessage,
 					),
 					TypeUnauthenticated,
 					DefaultMessage,
 				),
-				et: CustomType(499),
+				et: CustomTypeExample(499),
 			},
 			want: true,
 		},
@@ -154,7 +154,7 @@ func TestGetAPIError(t *testing.T) {
 						TypeEmpty,
 						DefaultMessage,
 					),
-					CustomType(499),
+					CustomTypeExample(499),
 					DefaultMessage,
 				),
 			},
@@ -274,6 +274,14 @@ func TestAllGetAPIError(t *testing.T) {
 			},
 			want:  http.StatusPaymentRequired,
 			want2: "your subscription has expired",
+		},
+		{
+			name: "Custom Type",
+			args: args{
+				err: WrapType(New("internal error"), NewCustomType("error detail", http.StatusFailedDependency), DefaultMessage),
+			},
+			want:  http.StatusFailedDependency,
+			want2: DefaultMessage + ": internal error",
 		},
 	}
 	for _, tt := range tests {
