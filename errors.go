@@ -142,6 +142,9 @@ func (f *fundamental) Format(s fmt.State, verb rune) {
 }
 
 func (f *fundamental) Type() Typer {
+	if f.eType == nil {
+		return defaultErrType
+	}
 	return f.eType
 }
 
@@ -313,6 +316,9 @@ func (w *withMessage) Format(s fmt.State, verb rune) {
 }
 
 func (w *withMessage) Type() Typer {
+	if w.eType == nil {
+		return defaultErrType
+	}
 	return w.eType
 }
 
