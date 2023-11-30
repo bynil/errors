@@ -3,7 +3,9 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"net/http"
+	"reflect"
 	"testing"
 )
 
@@ -292,6 +294,42 @@ func TestAllGetAPIError(t *testing.T) {
 			}
 			if got2 != tt.want2 {
 				t.Errorf("GetAPIError(), %s, got2 = %v, want %v", tt.name, got2, tt.want2)
+			}
+		})
+	}
+}
+
+func TestGetLocalizeConfig(t *testing.T) {
+	lc := &i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "PersonCats",
+			One:   "{{.Name}} has {{.Count}} cat.",
+			Other: "{{.Name}} has {{.Count}} cats.",
+		},
+		TemplateData: map[string]interface{}{
+			"Name":  "Nick",
+			"Count": 2,
+		},
+		PluralCount: 2,
+	}
+	type args struct {
+		err error
+	}
+	tests := []struct {
+		name   string
+		args   args
+		wantLc *i18n.LocalizeConfig
+	}{
+		{
+			"ok",
+			args{err: NewI18n(TypeNotFound, lc)},
+			lc,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotLc := GetLocalizeConfig(tt.args.err); !reflect.DeepEqual(gotLc, tt.wantLc) {
+				t.Errorf("GetLocalizeConfig() = %v, want %v", gotLc, tt.wantLc)
 			}
 		})
 	}

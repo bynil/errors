@@ -174,3 +174,14 @@ func GetAPIError(err error) (code int, msg string) {
 	}
 	return defaultErrType.HTTPStatusCode(), msg
 }
+
+// GetLocalizeConfig tries to get the localize config from error, may be nil.
+func GetLocalizeConfig(err error) (lc *i18n.LocalizeConfig) {
+	if err == nil {
+		return nil
+	}
+	if apiErr, _ := err.(I18ner); apiErr != nil {
+		return apiErr.LocalizeConfig()
+	}
+	return nil
+}
