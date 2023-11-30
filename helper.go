@@ -86,14 +86,14 @@ func Unauthenticatedf(format string, args ...interface{}) error {
 
 }
 
-// Unauthorized is a helper function to create a new error of type TypeUnauthorized
-func Unauthorized(message string) error {
-	return newErr(nil, message, TypeUnauthorized)
+// NoPermission is a helper function to create a new error of type TypeNoPermission
+func NoPermission(message string) error {
+	return newErr(nil, message, TypeNoPermission)
 }
 
-// Unauthorizedf is a helper function to create a new error of type TypeUnauthorized, with formatted message
-func Unauthorizedf(format string, args ...interface{}) error {
-	return newErrf(nil, TypeUnauthorized, format, args...)
+// NoPermissionf is a helper function to create a new error of type TypeNoPermission, with formatted message
+func NoPermissionf(format string, args ...interface{}) error {
+	return newErrf(nil, TypeNoPermission, format, args...)
 }
 
 // Empty is a helper function to create a new error of type TypeEmpty

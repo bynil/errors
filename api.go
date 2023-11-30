@@ -44,8 +44,8 @@ const (
 	TypeDuplicate
 	// TypeUnauthenticated is error type when trying to access an authenticated API without authentication
 	TypeUnauthenticated
-	// TypeUnauthorized is error type for when there's an unauthorized access attempt
-	TypeUnauthorized
+	// TypeNoPermission is error type for when there's an unauthorized access attempt
+	TypeNoPermission
 	// TypeEmpty is error type for when an expected non-empty resource, is empty
 	TypeEmpty
 	// TypeNotFound is error type for an expected resource is not found e.g. user ID not found
@@ -90,7 +90,7 @@ func (e errType) HTTPStatusCode() int {
 		{
 			status = http.StatusUnauthorized
 		}
-	case TypeUnauthorized:
+	case TypeNoPermission:
 		{
 			status = http.StatusForbidden
 		}

@@ -236,9 +236,9 @@ func TestAllGetAPIError(t *testing.T) {
 			want2: "authentication required",
 		},
 		{
-			name: "TypeUnauthorized",
+			name: "TypeNoPermission",
 			args: args{
-				err: Unauthorized("not authorized to access this resource"),
+				err: NoPermission("not authorized to access this resource"),
 			},
 			want:  http.StatusForbidden,
 			want2: "not authorized to access this resource",
