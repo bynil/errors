@@ -3,6 +3,12 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"golang.org/x/text/language"
+)
+
+var (
+	localizer = i18n.NewLocalizer(i18n.NewBundle(language.English), "en")
 )
 
 func newErr(e error, message string, eType Typer) error {

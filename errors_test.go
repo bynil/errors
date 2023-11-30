@@ -3,6 +3,7 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"io"
 	"net/http"
 	"reflect"
@@ -324,5 +325,55 @@ func TestWrapTypef(t *testing.T) {
 				t.Errorf("WrapTypef() msg = %v, want %v", msg, tt.wantMsg)
 			}
 		})
+	}
+}
+
+func TestLocalization(t *testing.T) {
+	oneLc := &i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "PersonCats",
+			One:   "{{.Name}} has {{.Count}} cat.",
+			Other: "{{.Name}} has {{.Count}} cats.",
+		},
+		TemplateData: map[string]interface{}{
+			"Name":  "Nick",
+			"Count": 1,
+		},
+		PluralCount: 1,
+	}
+	twoLc := &i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "PersonCats",
+			One:   "{{.Name}} has {{.Count}} cat.",
+			Other: "{{.Name}} has {{.Count}} cats.",
+		},
+		TemplateData: map[string]interface{}{
+			"Name":  "Nick",
+			"Count": 2,
+		},
+		PluralCount: 2,
+	}
+	tests := []struct {
+		eType    Typer
+		lc       *i18n.LocalizeConfig
+		want     string
+		wantType Typer
+	}{
+		{TypeDuplicate, oneLc, "Nick has 1 cat.", TypeDuplicate},
+		{TypeNotFound, twoLc, "Nick has 2 cats.", TypeNotFound},
+	}
+
+	for _, tt := range tests {
+		got := NewI18n(tt.eType, tt.lc).Error()
+		if got != tt.want {
+			t.Errorf("NewI18n(%v, %v): got: %q, want %q", tt.eType, tt.lc, got, tt.want)
+		}
+		gotLc := NewI18n(tt.eType, tt.lc).(I18ner).LocalizeConfig()
+		if gotLc != tt.lc {
+			t.Errorf("NewI18n(%v, %v): got: %v, want %v", tt.eType, tt.lc, gotLc, tt.lc)
+		}
+		if !HasType(NewI18n(tt.eType, tt.lc), tt.wantType) {
+			t.Errorf("NewI18n(%v, %v): do not have type %v", tt.eType, tt.lc, tt.wantType)
+		}
 	}
 }

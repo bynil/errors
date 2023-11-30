@@ -1,12 +1,17 @@
 package errors
 
 import (
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"net/http"
 )
 
 // APIError returns an HTTP status code and an API-safe error message.
 type APIError interface {
 	APIError() (statusCode int, msg string)
+}
+
+type I18ner interface {
+	LocalizeConfig() (lc *i18n.LocalizeConfig)
 }
 
 type Typer interface {

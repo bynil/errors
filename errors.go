@@ -94,6 +94,7 @@ package errors
 
 import (
 	"fmt"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"io"
 )
 
@@ -104,6 +105,16 @@ func New(message string) error {
 		msg:   message,
 		stack: callers(),
 	}
+}
+
+func NewI18n(eType Typer, lc *i18n.LocalizeConfig) error {
+	err := &localization{
+		lc:    lc,
+		eType: eType,
+		stack: callers(),
+	}
+	err.msg, _ = localizer.Localize(lc)
+	return err
 }
 
 // Errorf formats according to a format specifier and returns the string
@@ -324,6 +335,46 @@ func (w *withMessage) Type() Typer {
 
 func (w *withMessage) APIError() (int, string) {
 	return w.Type().HTTPStatusCode(), w.Error()
+}
+
+type localization struct {
+	lc    *i18n.LocalizeConfig
+	eType Typer
+	msg   string
+	*stack
+}
+
+func (l *localization) Error() string { return l.msg }
+
+func (l *localization) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			io.WriteString(s, l.msg)
+			l.stack.Format(s, verb)
+			return
+		}
+		fallthrough
+	case 's':
+		io.WriteString(s, l.msg)
+	case 'q':
+		fmt.Fprintf(s, "%q", l.msg)
+	}
+}
+
+func (l *localization) LocalizeConfig() (lc *i18n.LocalizeConfig) {
+	return l.lc
+}
+
+func (l *localization) Type() Typer {
+	if l.eType == nil {
+		return defaultErrType
+	}
+	return l.eType
+}
+
+func (l *localization) APIError() (int, string) {
+	return l.Type().HTTPStatusCode(), l.Error()
 }
 
 // Cause returns the underlying cause of the error, if possible.
